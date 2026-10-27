@@ -1,0 +1,84 @@
+{
+  "model_type": "Random Forest Classifier (Ensemble)",
+  "dataset_used": "ibm_hr_attrition_benchmark.csv",
+  "total_records": 1470,
+  "trained_at": "2026-10-26T08:35:22.318794",
+  "accuracy": 63.61,
+  "precision": 46.25,
+  "recall": 36.63,
+  "f1_score": 40.88,
+  "roc_auc": 67.75,
+  "confusion_matrix": [
+    [
+      150,
+      43
+    ],
+    [
+      64,
+      37
+    ]
+  ],
+  "top_features": [
+    {
+      "feature": "MonthlyIncome",
+      "importance": 6.41
+    },
+    {
+      "feature": "OverTime_Yes",
+      "importance": 6.17
+    },
+    {
+      "feature": "MonthlyRate",
+      "importance": 6.11
+    },
+    {
+      "feature": "DailyRate",
+      "importance": 5.79
+    },
+    {
+      "feature": "HourlyRate",
+      "importance": 5.79
+    },
+    {
+      "feature": "JobSatisfaction",
+      "importance": 4.52
+    },
+    {
+      "feature": "Age",
+      "importance": 4.36
+    },
+    {
+      "feature": "TotalWorkingYears",
+      "importance": 4.28
+    },
+    {
+      "feature": "DistanceFromHome",
+      "importance": 4.17
+    },
+    {
+      "feature": "NumCompaniesWorked",
+      "importance": 3.93
+    },
+    {
+      "feature": "PercentSalaryHike",
+      "importance": 3.71
+    },
+    {
+      "feature": "YearsAtCompany",
+      "importance": 3.56
+    },
+    {
+      "feature": "YearsInCurrentRole",
+      "importance": 3.55
+    },
+    {
+      "feature": "WorkLifeBalance",
+      "importance": 3.48
+    },
+    {
+      "feature": "TrainingTimesLastYear",
+      "importance": 3.43
+    }
+  ],
+  "n_features": 44
+}
