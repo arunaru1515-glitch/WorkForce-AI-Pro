@@ -23,8 +23,7 @@
 7. [Installation & Setup Guide](#-installation--setup-guide)
 8. [API Documentation (Swagger UI)](#-api-documentation-swagger-ui)
 9. [Automated Testing (Pytest Suite)](#-automated-testing-pytest-suite)
-10. [Default Demo Credentials](#-default-demo-credentials)
-11. [Deliverables Verification Matrix](#-deliverables-verification-matrix)
+10. [Deliverables Verification Matrix](#-deliverables-verification-matrix)
 
 ---
 
@@ -271,21 +270,6 @@ tests/test_overall.py .....                                              [100%]
 
 ---
 
-## 🔑 Default Demo Credentials
-
-Pre-seeded enterprise accounts available for evaluation:
-
-| Role | Email | Password | Access Scope |
-| :--- | :--- | :--- | :--- |
-| **System Admin** | `admin@workforce.ai` | `Admin@123` | Full access to all 30 modules, audit logs, and settings |
-| **HR Lead** | `hr@workforce.ai` | `Hr@123` | Employee management, payroll, retention interventions |
-| **Eng Manager** | `manager@workforce.ai` | `Manager@123` | Team performance reviews, task assignments, leave reviews |
-| **Senior Dev** | `employee@workforce.ai` | `Employee@123` | Personal attendance, personal leaves, and payslips |
-| **Financial Analyst**| `priya.patel@workforce.ai` | `Employee@123` | Scoped employee self-service portal |
-| **Regular Staff** | `kavin.r@workforce.ai` | `Employee@123` | Strict employee self-service (RBAC verification) |
-
----
-
 ## 📊 Deliverables Verification Matrix
 
 | Required Deliverable | Status | Implementation Details |
@@ -300,7 +284,4 @@ Pre-seeded enterprise accounts available for evaluation:
 | **Database Schema** | ✅ Completed | 15 normalized tables hosted in MySQL (`workforce_ai_db`) |
 | **Test Results** | ✅ Completed | 37 automated tests passing in Pytest (100% green) |
 
----
 
-## 📄 License
-This project is developed as an enterprise workforce intelligence platform for evaluation and production demonstration. Distributed under the **MIT License**.
