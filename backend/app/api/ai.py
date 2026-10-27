@@ -25,7 +25,7 @@ from app.ml.predictor import predictor
 from app.ml.train_model import train_attrition_model
 from app.ml.forecasting import generate_workforce_forecast
 
-router = APIRouter(prefix="/ai", tags=["AI Attrition Engine & Intelligence (Modules 12-15, 17)"])
+router = APIRouter(prefix="/ai", tags=["5. AI Attrition Intelligence"])
 
 @router.get("/model-info", response_model=ModelInfoResponse)
 def get_model_info(current_user: User = Depends(get_current_user)):

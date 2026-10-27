@@ -9,7 +9,7 @@ from app.models.user import User
 from app.schemas.chat import ChatMessageCreate, ChatMessageResponse, ChatUserSummary
 from app.core.deps import get_current_user
 
-router = APIRouter(prefix="/chat", tags=["One-to-One Chat & Communication System"])
+router = APIRouter(prefix="/chat", tags=["7. Chat & Documents"])
 
 # WebSocket Connection Manager for Real-time messaging
 class ConnectionManager:

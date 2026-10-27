@@ -8,18 +8,18 @@ from datetime import datetime
 
 from app.database import get_db
 from app.models.dataset import Dataset
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.schemas.dataset import DatasetResponse, DatasetPreviewResponse
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, require_roles
 
-router = APIRouter(prefix="/datasets", tags=["Dataset Management System (Module 11)"])
+router = APIRouter(prefix="/datasets", tags=["5. AI Attrition Intelligence"])
 
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "uploads", "datasets")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 @router.get("/", response_model=List[DatasetResponse])
-def get_datasets(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    """Module 11: List all uploaded and active datasets with versioning metadata"""
+def get_datasets(db: Session = Depends(get_db), current_user: User = Depends(require_roles([UserRole.ADMIN, UserRole.HR]))):
+    """Module 11 & Module 26: List all uploaded datasets (Restricted to ADMIN, HR)"""
     return db.query(Dataset).order_by(Dataset.id.desc()).all()
 
 @router.post("/upload", response_model=DatasetResponse, status_code=status.HTTP_201_CREATED)
@@ -29,11 +29,9 @@ async def upload_dataset(
     version: str = Form("v1.0"),
     description: Optional[str] = Form(None),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_roles([UserRole.ADMIN, UserRole.HR]))
 ):
-    """Module 11: Upload and validate HR Attrition CSV/Excel dataset"""
-    if current_user.role not in ["ADMIN", "HR"]:
-        raise HTTPException(status_code=403, detail="Only Admins and HR Leads can upload new benchmark datasets.")
+    """Module 11 & Module 26: Upload and validate HR Attrition dataset (Restricted to ADMIN, HR)"""
 
     ext = os.path.splitext(file.filename)[1].lower()
     if ext not in [".csv", ".xlsx", ".xls"]:

@@ -27,7 +27,7 @@ from app.schemas.reports import (
 from app.core.deps import get_current_user, require_roles
 from app.core.audit import log_audit_event
 
-router = APIRouter(prefix="/reports", tags=["Reports & Export System (Module 19)"])
+router = APIRouter(prefix="/reports", tags=["8. Reports & Analytics"])
 
 @router.get("/summary", response_model=ReportsSummaryResponse)
 def get_reports_summary(
@@ -104,9 +104,9 @@ def get_employee_report(
             email=emp.email,
             department=emp.department.name if emp.department else "Unassigned",
             job_title=emp.job_title,
-            salary=emp.salary,
-            employment_type=emp.employment_type,
-            status=emp.status,
+            salary=emp.salary or 50000.0,
+            employment_type=emp.employment_type or "Full-Time",
+            status=emp.status or "Active",
             hire_date=emp.hire_date.strftime("%Y-%m-%d") if emp.hire_date else None,
             risk_level=latest_risks.get(emp.id, "LOW")
         ))

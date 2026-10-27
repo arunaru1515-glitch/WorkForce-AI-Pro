@@ -1,8 +1,9 @@
 from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional, Dict, List, Any
+from app.schemas.base import ORMBaseModel
 
-class AuditLogResponse(BaseModel):
+class AuditLogResponse(ORMBaseModel):
     id: int
     user_id: Optional[int] = None
     user_name: str
@@ -11,9 +12,6 @@ class AuditLogResponse(BaseModel):
     details: Optional[str] = None
     ip_address: str
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 class AuditStatsResponse(BaseModel):
     total_logs: int

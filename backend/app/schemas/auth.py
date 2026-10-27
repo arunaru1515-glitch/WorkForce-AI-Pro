@@ -2,8 +2,9 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional
 from datetime import datetime
 from app.models.user import UserRole
+from app.schemas.base import ORMBaseModel
 
-class UserBase(BaseModel):
+class UserBase(ORMBaseModel):
     email: EmailStr
     full_name: str
     role: Optional[UserRole] = UserRole.EMPLOYEE
@@ -19,10 +20,10 @@ class UserResponse(UserBase):
     id: int
     role: UserRole
     is_active: bool
+    employee_id: Optional[int] = None
+    employee_code: Optional[str] = None
+    department_name: Optional[str] = None
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 class Token(BaseModel):
     access_token: str

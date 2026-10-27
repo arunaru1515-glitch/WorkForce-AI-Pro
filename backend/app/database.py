@@ -8,6 +8,21 @@ logger = logging.getLogger(__name__)
 db_url = settings.get_database_url()
 
 try:
+    if "mysql" in db_url:
+        try:
+            import pymysql
+            pre_conn = pymysql.connect(
+                host=settings.MYSQL_HOST,
+                user=settings.MYSQL_USER,
+                password=settings.MYSQL_PASSWORD,
+                port=int(settings.MYSQL_PORT)
+            )
+            with pre_conn.cursor() as cursor:
+                cursor.execute(f"CREATE DATABASE IF NOT EXISTS `{settings.MYSQL_DB}`;")
+            pre_conn.close()
+        except Exception as pre_err:
+            logger.debug(f"Pre-creation check skipped: {pre_err}")
+
     engine = create_engine(
         db_url,
         pool_pre_ping=True,

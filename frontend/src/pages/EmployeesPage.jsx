@@ -154,7 +154,7 @@ export default function EmployeesPage() {
   };
 
   return (
-    <div className="p-8 space-y-6 max-w-7xl mx-auto">
+    <div className="w-full px-6 py-5 space-y-5">
       {/* Top Notification Toast */}
       {toastMessage && (
         <div className="bg-emerald-50 border border-emerald-300 text-emerald-800 px-4 py-3 rounded-xl flex items-center justify-between shadow-sm animate-in fade-in duration-200">

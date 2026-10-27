@@ -1,12 +1,13 @@
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
+from app.schemas.base import ORMBaseModel
 
 class ChatMessageCreate(BaseModel):
     receiver_id: int
     message: str
 
-class ChatMessageResponse(BaseModel):
+class ChatMessageResponse(ORMBaseModel):
     id: int
     sender_id: int
     sender_name: Optional[str] = None
@@ -15,9 +16,6 @@ class ChatMessageResponse(BaseModel):
     message: str
     is_read: bool
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 class ChatUserSummary(BaseModel):
     user_id: int

@@ -5,7 +5,7 @@ from datetime import datetime
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from typing import List
 
-router = APIRouter(tags=["Real-Time Workforce Monitoring (Module 18)"])
+router = APIRouter(tags=["5. AI Attrition Intelligence"])
 
 class ConnectionManager:
     def __init__(self):

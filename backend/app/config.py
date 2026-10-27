@@ -1,8 +1,10 @@
 import os
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", extra="allow")
+    
     PROJECT_NAME: str = "WorkForce AI Pro"
     API_V1_STR: str = "/api/v1"
     
@@ -21,10 +23,6 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
-    
-    class Config:
-        env_file = ".env"
-        extra = "allow"
 
     def get_database_url(self) -> str:
         if self.DATABASE_URL:

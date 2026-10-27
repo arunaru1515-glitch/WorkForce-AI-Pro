@@ -1,8 +1,9 @@
 from pydantic import BaseModel
 from datetime import date, datetime
 from typing import Optional
+from app.schemas.base import ORMBaseModel
 
-class TaskBase(BaseModel):
+class TaskBase(ORMBaseModel):
     title: str
     description: Optional[str] = None
     assigned_to: int
@@ -36,9 +37,6 @@ class TaskResponse(TaskBase):
     is_overdue: Optional[bool] = False
     created_at: datetime
     updated_at: datetime
-
-    class Config:
-        from_attributes = True
 
 class TaskStatsResponse(BaseModel):
     total_tasks: int

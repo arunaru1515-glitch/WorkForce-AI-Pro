@@ -70,7 +70,7 @@ export default function ForecastingPage() {
   const timelineData = getTimelineData();
 
   return (
-    <div className="p-8 space-y-6 max-w-7xl mx-auto">
+    <div className="w-full px-6 py-5 space-y-5">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

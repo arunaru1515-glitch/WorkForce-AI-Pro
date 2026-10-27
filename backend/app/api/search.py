@@ -12,7 +12,7 @@ from app.models.user import User, UserRole
 from app.schemas.search import GlobalSearchResponse, SearchResultItem
 from app.core.deps import get_current_user
 
-router = APIRouter(prefix="/search", tags=["Advanced Search & Filtering System (Module 24)"])
+router = APIRouter(prefix="/search", tags=["8. Reports & Analytics"])
 
 @router.get("/global", response_model=GlobalSearchResponse)
 def global_multi_filter_search(

@@ -1,8 +1,9 @@
 from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional, List, Dict, Any
+from app.schemas.base import ORMBaseModel
 
-class DatasetBase(BaseModel):
+class DatasetBase(ORMBaseModel):
     name: str
     description: Optional[str] = None
     version: Optional[str] = "v1.0"
@@ -16,9 +17,6 @@ class DatasetResponse(DatasetBase):
     status: str
     uploaded_by: Optional[int] = None
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 class DatasetPreviewResponse(BaseModel):
     dataset_id: int

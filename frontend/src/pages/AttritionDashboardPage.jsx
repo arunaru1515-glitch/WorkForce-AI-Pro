@@ -238,7 +238,7 @@ export default function AttritionDashboardPage({ setActiveTab }) {
   };
 
   return (
-    <div className="p-8 space-y-6 max-w-7xl mx-auto">
+    <div className="w-full px-6 py-5 space-y-5">
       {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>

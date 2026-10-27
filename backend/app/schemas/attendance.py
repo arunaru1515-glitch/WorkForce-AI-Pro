@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional
 from datetime import date, datetime
+from app.schemas.base import ORMBaseModel
 
 class AttendanceCheckIn(BaseModel):
     employee_id: Optional[int] = None
@@ -22,7 +23,7 @@ class AttendanceCreate(BaseModel):
     status: Optional[str] = "Present"
     notes: Optional[str] = None
 
-class AttendanceResponse(BaseModel):
+class AttendanceResponse(ORMBaseModel):
     id: int
     employee_id: int
     employee_name: Optional[str] = None
@@ -35,6 +36,3 @@ class AttendanceResponse(BaseModel):
     status: str
     notes: Optional[str] = None
     created_at: datetime
-
-    class Config:
-        from_attributes = True

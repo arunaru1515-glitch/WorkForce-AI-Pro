@@ -10,7 +10,7 @@ from app.models.employee import Employee
 from app.schemas.document import DocumentResponse
 from app.core.deps import get_current_user
 
-router = APIRouter(prefix="/documents", tags=["Document Management System"])
+router = APIRouter(prefix="/documents", tags=["7. Chat & Documents"])
 
 UPLOAD_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)

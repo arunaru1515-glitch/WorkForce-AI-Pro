@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional
 from datetime import date, datetime
+from app.schemas.base import ORMBaseModel
 
 class LeaveApply(BaseModel):
     employee_id: int
@@ -13,7 +14,7 @@ class LeaveReview(BaseModel):
     status: str # Approved, Rejected
     review_comments: Optional[str] = None
 
-class LeaveResponse(BaseModel):
+class LeaveResponse(ORMBaseModel):
     id: int
     employee_id: int
     employee_name: Optional[str] = None
@@ -27,9 +28,6 @@ class LeaveResponse(BaseModel):
     review_comments: Optional[str] = None
     applied_on: datetime
     reviewed_on: Optional[datetime] = None
-
-    class Config:
-        from_attributes = True
 
 class LeaveBalanceResponse(BaseModel):
     employee_id: int

@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
+from app.schemas.base import ORMBaseModel
 
 class PayrollGenerate(BaseModel):
     employee_id: int
@@ -9,7 +10,7 @@ class PayrollGenerate(BaseModel):
     bonus: Optional[float] = 0.0
     other_deductions: Optional[float] = 0.0
 
-class PayrollResponse(BaseModel):
+class PayrollResponse(ORMBaseModel):
     id: int
     employee_id: int
     employee_code: Optional[str] = None
@@ -29,6 +30,3 @@ class PayrollResponse(BaseModel):
     status: str
     payment_date: Optional[datetime] = None
     created_at: datetime
-
-    class Config:
-        from_attributes = True

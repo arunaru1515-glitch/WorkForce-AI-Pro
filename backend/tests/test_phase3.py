@@ -240,13 +240,55 @@ def test_rbac_restrictions():
     emp_token = get_employee_token()
     emp_headers = {"Authorization": f"Bearer {emp_token}"}
 
-    # Employee should NOT have access to system audit logs (403 Forbidden)
+    # 1. Employee should NOT have access to system audit logs (403 Forbidden)
     audit_res = client.get("/api/v1/audit/logs", headers=emp_headers)
     assert audit_res.status_code == 403
 
-    # Employee should NOT have access to reports export
+    # 2. Employee should NOT have access to reports export
     export_res = client.get("/api/v1/reports/export/csv?report_type=payroll", headers=emp_headers)
     assert export_res.status_code == 403
+
+    # 3. Employee should NOT be able to generate company payroll (403 Forbidden)
+    pay_gen_res = client.post("/api/v1/payroll/generate", json={
+        "employee_id": 1,
+        "month": 12,
+        "year": 2026,
+        "bonus": 1000
+    }, headers=emp_headers)
+    assert pay_gen_res.status_code == 403
+
+    # 4. Employee should NOT be able to mark payroll as paid (403 Forbidden)
+    pay_paid_res = client.post("/api/v1/payroll/1/pay", headers=emp_headers)
+    assert pay_paid_res.status_code == 403
+
+    # 5. Employee calling GET /payroll/ should only see their own payslips (never other employees')
+    pay_list_res = client.get("/api/v1/payroll/", headers=emp_headers)
+    assert pay_list_res.status_code == 200
+    pay_list = pay_list_res.json()
+    for p in pay_list:
+        assert p["employee_name"] != "Priya Patel"
+
+    # 6. Employee cannot view other employees' payslip detail (403 Forbidden)
+    # Payslip 1 belongs to Priya Patel (employee_id 1)
+    slip_res = client.get("/api/v1/payroll/payslip/1", headers=emp_headers)
+    assert slip_res.status_code == 403
+
+    # 7. Employee cannot approve/review leaves (403 Forbidden)
+    leave_rev_res = client.put("/api/v1/leaves/1/review", json={
+        "status": "Approved",
+        "review_comments": "Hacked review"
+    }, headers=emp_headers)
+    assert leave_rev_res.status_code == 403
+
+    # 8. Employee cannot create new employees (403 Forbidden)
+    emp_create_res = client.post("/api/v1/employees/", json={
+        "first_name": "Rogue",
+        "last_name": "User",
+        "email": "rogue@workforce.ai",
+        "department_id": 1,
+        "job_title": "Hacker"
+    }, headers=emp_headers)
+    assert emp_create_res.status_code == 403
 
 # --- MODULE 27: Workforce Stability Engine ---
 

@@ -20,7 +20,7 @@ class EmployeeReportItem(BaseModel):
     department: str
     job_title: str
     salary: float
-    employment_type: str
+    employment_type: Optional[str] = "Full-Time"
     status: str
     hire_date: Optional[str] = None
     risk_level: Optional[str] = "LOW"

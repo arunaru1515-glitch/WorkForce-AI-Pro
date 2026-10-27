@@ -6,10 +6,11 @@ from app.database import get_db
 from app.models.leave import Leave
 from app.models.employee import Employee
 from app.models.notification import Notification
+from app.models.user import UserRole
 from app.schemas.leave import LeaveApply, LeaveReview, LeaveResponse, LeaveBalanceResponse
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, require_roles
 
-router = APIRouter(prefix="/leaves", tags=["Leave Management System"])
+router = APIRouter(prefix="/leaves", tags=["3. Attendance & Leaves"])
 
 def format_leave_response(l: Leave) -> LeaveResponse:
     emp_name = f"{l.employee.first_name} {l.employee.last_name}" if l.employee else "Unknown"
@@ -37,12 +38,22 @@ def get_leaves(
     status: Optional[str] = Query(None, description="Filter by Pending, Approved, Rejected"),
     employee_id: Optional[int] = Query(None)
 ):
-    """Module 5: List leaves with status filters"""
+    """Module 5 & Module 26: List leaves with RBAC enforcement"""
     query = db.query(Leave)
+    
+    # RBAC: Regular EMPLOYEE can ONLY see their own leave requests
+    if current_user.role == UserRole.EMPLOYEE:
+        emp = db.query(Employee).filter(
+            (Employee.user_id == current_user.id) | (Employee.email == current_user.email)
+        ).first()
+        if not emp:
+            return []
+        query = query.filter(Leave.employee_id == emp.id)
+    elif employee_id:
+        query = query.filter(Leave.employee_id == employee_id)
+
     if status:
         query = query.filter(Leave.status == status)
-    if employee_id:
-        query = query.filter(Leave.employee_id == employee_id)
         
     leaves = query.order_by(Leave.id.desc()).all()
     return [format_leave_response(l) for l in leaves]
@@ -50,9 +61,19 @@ def get_leaves(
 @router.post("/apply", response_model=LeaveResponse, status_code=status.HTTP_201_CREATED)
 def apply_leave(leave_in: LeaveApply, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     """Module 5: Apply for Leave"""
-    emp = db.query(Employee).filter(Employee.id == leave_in.employee_id).first()
-    if not emp:
-        raise HTTPException(status_code=404, detail="Employee not found")
+    # RBAC: If standard employee, always apply for their own employee profile
+    if current_user.role == UserRole.EMPLOYEE:
+        emp = db.query(Employee).filter(
+            (Employee.user_id == current_user.id) | (Employee.email == current_user.email)
+        ).first()
+        if not emp:
+            raise HTTPException(status_code=400, detail="Employee profile not found for current user")
+        target_emp_id = emp.id
+    else:
+        emp = db.query(Employee).filter(Employee.id == leave_in.employee_id).first()
+        if not emp:
+            raise HTTPException(status_code=404, detail="Employee not found")
+        target_emp_id = leave_in.employee_id
         
     if leave_in.end_date < leave_in.start_date:
         raise HTTPException(status_code=400, detail="End date cannot be earlier than start date")
@@ -60,7 +81,7 @@ def apply_leave(leave_in: LeaveApply, db: Session = Depends(get_db), current_use
     days = (leave_in.end_date - leave_in.start_date).days + 1
     
     new_leave = Leave(
-        employee_id=leave_in.employee_id,
+        employee_id=target_emp_id,
         leave_type=leave_in.leave_type,
         start_date=leave_in.start_date,
         end_date=leave_in.end_date,
@@ -89,15 +110,9 @@ def review_leave(
     leave_id: int,
     review_in: LeaveReview,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user = Depends(require_roles([UserRole.ADMIN, UserRole.HR, UserRole.MANAGER]))
 ):
-    """Module 5: Leave Approval Workflow (Approve / Reject) - Restricted to ADMIN, HR, and MANAGER"""
-    if current_user.role not in ["ADMIN", "HR", "MANAGER"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Employees are not authorized to approve or reject leave requests. Only Managers, HR, and Administrators have review permissions."
-        )
-
+    """Module 5 & Module 26: Leave Approval Workflow (Approve / Reject) - Restricted to ADMIN, HR, and MANAGER"""
     leave = db.query(Leave).filter(Leave.id == leave_id).first()
     if not leave:
         raise HTTPException(status_code=404, detail="Leave request not found")
@@ -130,7 +145,7 @@ def cancel_leave(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    """Module 5: Cancel a Pending Leave Request"""
+    """Module 5 & Module 26: Cancel a Pending Leave Request"""
     leave = db.query(Leave).filter(Leave.id == leave_id).first()
     if not leave:
         raise HTTPException(status_code=404, detail="Leave request not found")
@@ -139,8 +154,11 @@ def cancel_leave(
         raise HTTPException(status_code=400, detail="Only pending leave requests can be cancelled.")
 
     # Employees can only cancel their own leave
-    if current_user.role == "EMPLOYEE":
-        if not leave.employee or leave.employee.user_id != current_user.id:
+    if current_user.role == UserRole.EMPLOYEE:
+        emp = db.query(Employee).filter(
+            (Employee.user_id == current_user.id) | (Employee.email == current_user.email)
+        ).first()
+        if not emp or leave.employee_id != emp.id:
             raise HTTPException(status_code=403, detail="You can only cancel your own leave requests.")
 
     db.delete(leave)

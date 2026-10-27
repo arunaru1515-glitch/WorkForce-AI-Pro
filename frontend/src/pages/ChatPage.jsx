@@ -66,7 +66,7 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="p-8 max-w-7xl mx-auto h-[calc(100vh-4rem)] flex flex-col space-y-4">
+    <div className="w-full px-6 py-5 h-[calc(100vh-4rem)] flex flex-col space-y-4">
       <div>
         <h2 className="text-xl font-bold text-slate-900 tracking-tight">Messages</h2>
         <p className="text-xs text-slate-500 mt-0.5">Direct workplace messaging between team members, managers, and HR.</p>

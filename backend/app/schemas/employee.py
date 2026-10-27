@@ -2,8 +2,9 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional
 from datetime import datetime
 from app.models.employee import EmploymentType, EmployeeStatus
+from app.schemas.base import ORMBaseModel
 
-class EmployeeBase(BaseModel):
+class EmployeeBase(ORMBaseModel):
     first_name: str
     last_name: str
     email: EmailStr
@@ -39,10 +40,7 @@ class EmployeeUpdate(BaseModel):
 class EmployeeResponse(EmployeeBase):
     id: int
     employee_code: str
-    hire_date: datetime
+    hire_date: Optional[datetime] = None
     department_name: Optional[str] = None
     role: Optional[str] = "EMPLOYEE"
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
+    created_at: Optional[datetime] = None

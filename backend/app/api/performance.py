@@ -17,7 +17,7 @@ from app.schemas.performance import (
 from app.core.deps import get_current_user, require_roles
 from app.core.audit import log_audit_event
 
-router = APIRouter(prefix="/performance", tags=["Performance Review System (Module 22)"])
+router = APIRouter(prefix="/performance", tags=["6. Tasks & Performance"])
 
 def format_review_response(review: PerformanceReview) -> PerformanceReviewResponse:
     emp_name = f"{review.employee.first_name} {review.employee.last_name}" if review.employee else "Unknown Employee"

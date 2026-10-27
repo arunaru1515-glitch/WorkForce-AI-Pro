@@ -50,7 +50,7 @@ export default function DashboardPage({ setActiveTab }) {
   const todayAtt = attendances.length > 0 ? attendances[0] : null;
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+    <div className="w-full px-6 py-5 space-y-5">
       {/* 1. Hero Dark Banner Card (Styling from screenshot, Content from Phase 1 PDF) */}
       <div className="bg-[#111827] rounded-2xl p-6 text-white shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6 border border-slate-800">
         <div className="space-y-2.5">
@@ -63,13 +63,13 @@ export default function DashboardPage({ setActiveTab }) {
 
           <div className="flex flex-wrap items-center gap-2 pt-1">
             <span className="text-[11px] bg-slate-800/90 text-slate-200 border border-slate-700/80 px-2.5 py-1 rounded-md font-mono">
-              ID: WF-1001
+              ID: {user?.employee_code || (user?.id ? `WF-${1000 + user.id}` : 'WF-1001')}
             </span>
             <span className="text-[11px] bg-slate-800/90 text-slate-200 border border-slate-700/80 px-2.5 py-1 rounded-md">
-              Dept: Executive / Operations
+              Dept: {user?.department_name || (['ADMIN', 'HR'].includes(user?.role) ? 'Executive / HR' : 'Operations')}
             </span>
             <span className="text-[11px] bg-slate-800/90 text-slate-200 border border-slate-700/80 px-2.5 py-1 rounded-md">
-              Role: {user?.role || 'ADMIN'}
+              Role: {user?.role || 'EMPLOYEE'}
             </span>
           </div>
         </div>
@@ -218,7 +218,15 @@ export default function DashboardPage({ setActiveTab }) {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data?.department_distribution || []}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                  <XAxis dataKey="department_name" stroke="#64748b" fontSize={11} tickLine={false} axisLine={{ stroke: '#e2e8f0' }} />
+                  <XAxis 
+                    dataKey="department_name" 
+                    stroke="#64748b" 
+                    fontSize={10} 
+                    interval={0}
+                    tickLine={false} 
+                    axisLine={{ stroke: '#e2e8f0' }} 
+                    tickFormatter={(val) => val && val.length > 12 ? `${val.substring(0, 10)}...` : val}
+                  />
                   <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={{ stroke: '#e2e8f0' }} />
                   <Tooltip 
                     contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', borderRadius: '8px', color: '#0f172a', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
@@ -238,8 +246,12 @@ export default function DashboardPage({ setActiveTab }) {
         <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h3 className="text-sm font-bold text-slate-900">Recent Attendance Log</h3>
-              <p className="text-xs text-slate-400">Latest workforce check-in records</p>
+              <h3 className="text-sm font-bold text-slate-900">
+                {user?.role === 'EMPLOYEE' ? 'My Attendance Log' : 'Recent Attendance Log'}
+              </h3>
+              <p className="text-xs text-slate-400">
+                {user?.role === 'EMPLOYEE' ? 'Your latest check-in & shift biometric records' : 'Latest workforce check-in records'}
+              </p>
             </div>
             <button
               onClick={() => setActiveTab('attendance')}
@@ -289,18 +301,22 @@ export default function DashboardPage({ setActiveTab }) {
           </div>
         </div>
 
-        {/* Table 2: Payroll & Compensation Slips (Module 6) */}
+        {/* Table 2: Payroll & Compensation Slips (Module 6 & Module 26) */}
         <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h3 className="text-sm font-bold text-slate-900">Workforce Payroll Slips</h3>
-              <p className="text-xs text-slate-400">Monthly salary breakdown & tax withholdings</p>
+              <h3 className="text-sm font-bold text-slate-900">
+                {user?.role === 'EMPLOYEE' ? 'My Recent Payslips' : 'Workforce Payroll Slips'}
+              </h3>
+              <p className="text-xs text-slate-400">
+                {user?.role === 'EMPLOYEE' ? 'Your personal monthly salary breakdown & payouts' : 'Monthly salary breakdown & tax withholdings'}
+              </p>
             </div>
             <button
               onClick={() => setActiveTab('payroll')}
               className="text-xs font-semibold text-slate-700 border border-slate-200 px-3 py-1 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
             >
-              Manage Payroll
+              {user?.role === 'EMPLOYEE' ? 'View All Payslips' : 'Manage Payroll'}
             </button>
           </div>
 
@@ -308,7 +324,7 @@ export default function DashboardPage({ setActiveTab }) {
             <table className="w-full text-left text-xs">
               <thead className="text-[11px] text-slate-400 border-b border-slate-100">
                 <tr>
-                  <th className="py-2.5 font-medium">Employee</th>
+                  <th className="py-2.5 font-medium">{user?.role === 'EMPLOYEE' ? 'Account' : 'Employee'}</th>
                   <th className="py-2.5 font-medium">Period</th>
                   <th className="py-2.5 font-medium">Net Amount</th>
                   <th className="py-2.5 font-medium">Status</th>
@@ -318,7 +334,9 @@ export default function DashboardPage({ setActiveTab }) {
               <tbody className="divide-y divide-slate-100 text-slate-700">
                 {payrolls.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="py-4 text-center text-slate-400">No payslips generated</td>
+                    <td colSpan="5" className="py-6 text-center text-slate-400">
+                      {user?.role === 'EMPLOYEE' ? 'No payslips generated for your profile yet' : 'No payslips generated'}
+                    </td>
                   </tr>
                 ) : (
                   payrolls.map((p, i) => (

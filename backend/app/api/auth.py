@@ -23,7 +23,28 @@ from app.core.security import (
 )
 from app.core.deps import get_current_user
 
-router = APIRouter(prefix="/auth", tags=["Authentication & Authorization"])
+router = APIRouter(prefix="/auth", tags=["1. Authentication & Profile"])
+
+def format_user_response(user: User, db: Session) -> UserResponse:
+    from app.models.employee import Employee
+    emp = db.query(Employee).filter(
+        (Employee.user_id == user.id) | (Employee.email == user.email)
+    ).first()
+    emp_id = emp.id if emp else None
+    emp_code = emp.employee_code if emp else f"WF-{1000 + user.id}"
+    dept_name = emp.department.name if emp and emp.department else ("Executive" if user.role in [UserRole.ADMIN, UserRole.HR] else "General Operations")
+    
+    return UserResponse(
+        id=user.id,
+        email=user.email,
+        full_name=user.full_name,
+        role=user.role,
+        is_active=user.is_active,
+        employee_id=emp_id,
+        employee_code=emp_code,
+        department_name=dept_name,
+        created_at=user.created_at
+    )
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def register(user_in: UserCreate, db: Session = Depends(get_db)):
@@ -46,7 +67,7 @@ def register(user_in: UserCreate, db: Session = Depends(get_db)):
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-    return new_user
+    return format_user_response(new_user, db)
 
 @router.post("/login", response_model=Token)
 def login(login_data: UserLogin, db: Session = Depends(get_db)):
@@ -72,7 +93,7 @@ def login(login_data: UserLogin, db: Session = Depends(get_db)):
         access_token=access_token,
         refresh_token=refresh_token,
         token_type="bearer",
-        user=UserResponse.model_validate(user)
+        user=format_user_response(user, db)
     )
 
 @router.post("/refresh")
@@ -100,9 +121,9 @@ def refresh_token(data: RefreshTokenRequest, db: Session = Depends(get_db)):
     }
 
 @router.get("/me", response_model=UserResponse)
-def get_current_user_profile(current_user: User = Depends(get_current_user)):
+def get_current_user_profile(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Module 1: Session Validation & Profile Retrieval"""
-    return current_user
+    return format_user_response(current_user, db)
 
 @router.post("/forgot-password", response_model=MessageResponse)
 def forgot_password(req: ForgotPasswordRequest, db: Session = Depends(get_db)):

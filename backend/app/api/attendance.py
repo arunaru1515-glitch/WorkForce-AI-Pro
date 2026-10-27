@@ -10,7 +10,7 @@ from app.models.user import UserRole
 from app.schemas.attendance import AttendanceCheckIn, AttendanceCheckOut, AttendanceCreate, AttendanceResponse
 from app.core.deps import get_current_user
 
-router = APIRouter(prefix="/attendance", tags=["Attendance & Shift Management"])
+router = APIRouter(prefix="/attendance", tags=["3. Attendance & Leaves"])
 
 class ShiftAssignmentRequest(BaseModel):
     employee_id: int

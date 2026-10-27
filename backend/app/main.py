@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.openapi.utils import get_openapi
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from datetime import datetime, date, timedelta
@@ -532,13 +533,84 @@ def seed_enterprise_data():
 # Execute seed on initialization
 seed_enterprise_data()
 
+tags_metadata = [
+    {
+        "name": "1. Authentication & Profile",
+        "description": "User login, registration, token refresh, and password management."
+    },
+    {
+        "name": "2. Employees & Directory",
+        "description": "Employee directory, department records, and staff profiles."
+    },
+    {
+        "name": "3. Attendance & Leaves",
+        "description": "Biometric check-in/out, shift schedules, and leave absence management."
+    },
+    {
+        "name": "4. Payroll & Compensation",
+        "description": "Salary structures, tax withholdings, and monthly payslips."
+    },
+    {
+        "name": "5. AI Attrition Intelligence",
+        "description": "ML flight risk predictions, dataset training, and retention interventions."
+    },
+    {
+        "name": "6. Tasks & Performance",
+        "description": "Operational task tracking, review cycles, and performance ratings."
+    },
+    {
+        "name": "7. Chat & Documents",
+        "description": "1-on-1 workplace messaging and employee document vault."
+    },
+    {
+        "name": "8. Reports & Analytics",
+        "description": "Executive metrics, report exports, audit logs, and directory search."
+    }
+]
+
 app = FastAPI(
     title="WorkForce AI Pro - HR Intelligence Platform API",
     description="Enterprise HR Attrition Prediction & Workforce Intelligence Platform API (Phases 1, 2 & 3)",
     version="3.0.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
+    openapi_tags=tags_metadata,
+    swagger_ui_parameters={
+        "docExpansion": "none",          # All categories collapsed by default for a clean, short page
+        "defaultModelsExpandDepth": 0,   # Shows clean collapsed Schemas list at the bottom
+        "filter": True,                  # Search bar to easily filter any endpoint
+        "displayRequestDuration": True
+    }
 )
+
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    openapi_schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+        tags=tags_metadata
+    )
+    # Keep only the essential primary business schemas (clean & minimal)
+    primary_schemas = {
+        "UserLogin", "UserResponse", "Token",
+        "EmployeeCreate", "EmployeeResponse",
+        "DepartmentResponse",
+        "AttendanceResponse", "LeaveResponse",
+        "PayrollResponse",
+        "PredictionResponse",
+        "TaskResponse", "PerformanceReviewResponse"
+    }
+    all_schemas = openapi_schema.get("components", {}).get("schemas", {})
+    openapi_schema["components"]["schemas"] = {
+        k: v for k, v in all_schemas.items() if k in primary_schemas
+    }
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+app.openapi = custom_openapi
 
 # CORS Middleware
 app.add_middleware(
@@ -572,7 +644,7 @@ app.include_router(tasks_router, prefix=settings.API_V1_STR)
 app.include_router(performance_router, prefix=settings.API_V1_STR)
 app.include_router(search_router, prefix=settings.API_V1_STR)
 
-@app.get("/")
+@app.get("/", tags=["1. Authentication & Profile"])
 def root():
     return {
         "platform": "WorkForce AI Pro",

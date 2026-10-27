@@ -12,7 +12,7 @@ from app.schemas.intervention import InterventionCreate, InterventionUpdate, Int
 from app.core.deps import get_current_user
 from app.ml.predictor import predictor
 
-router = APIRouter(prefix="/interventions", tags=["HR Intervention & Decision Support System (Module 16)"])
+router = APIRouter(prefix="/interventions", tags=["5. AI Attrition Intelligence"])
 
 def format_intervention_response(item: Intervention) -> InterventionResponse:
     emp_name = f"{item.employee.first_name} {item.employee.last_name}" if item.employee else "Unknown"

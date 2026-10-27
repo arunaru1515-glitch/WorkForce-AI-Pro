@@ -69,11 +69,17 @@ export default function PayrollPage() {
   };
 
   return (
-    <div className="p-8 space-y-6 max-w-7xl mx-auto">
+    <div className="w-full px-6 py-5 space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-900 tracking-tight">Payroll & Compensation</h2>
-          <p className="text-xs text-slate-500 mt-0.5">Automated salary structures, tax withholdings, and employee payslips.</p>
+          <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+            {isHRorAdmin ? 'Payroll & Compensation' : 'My Compensation & Payslips'}
+          </h2>
+          <p className="text-xs text-slate-500 mt-0.5">
+            {isHRorAdmin 
+              ? 'Automated salary structures, tax withholdings, and employee payslips.'
+              : 'Personal monthly salary breakdown, benefits, deductions, and downloadable payslips.'}
+          </p>
         </div>
         {isHRorAdmin && (
           <button
@@ -91,7 +97,7 @@ export default function PayrollPage() {
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 text-slate-500 uppercase font-semibold text-[11px] border-b border-slate-200">
               <tr>
-                <th className="py-3 px-4">Employee</th>
+                <th className="py-3 px-4">{isHRorAdmin ? 'Employee' : 'Account'}</th>
                 <th className="py-3 px-4">Period</th>
                 <th className="py-3 px-4">Basic Salary</th>
                 <th className="py-3 px-4">HRA + Allowances</th>
@@ -108,7 +114,11 @@ export default function PayrollPage() {
                 </tr>
               ) : payrolls.length === 0 ? (
                 <tr>
-                  <td colSpan="8" className="py-8 text-center text-slate-400">No payroll records generated yet.</td>
+                  <td colSpan="8" className="py-8 text-center text-slate-400">
+                    {isHRorAdmin 
+                      ? 'No payroll records generated yet.' 
+                      : 'No payslips generated for your account yet. Contact HR to process your monthly cycle.'}
+                  </td>
                 </tr>
               ) : (
                 payrolls.map((p) => (

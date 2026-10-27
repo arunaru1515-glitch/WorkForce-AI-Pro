@@ -5,9 +5,10 @@ from app.database import get_db
 from app.models.department import Department
 from app.models.employee import Employee
 from app.schemas.department import DepartmentCreate, DepartmentUpdate, DepartmentResponse
-from app.core.deps import get_current_user
+from app.models.user import UserRole
+from app.core.deps import get_current_user, require_roles
 
-router = APIRouter(prefix="/departments", tags=["Department & Role Management"])
+router = APIRouter(prefix="/departments", tags=["2. Employees & Directory"])
 
 @router.get("/", response_model=List[DepartmentResponse])
 def get_departments(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
@@ -46,8 +47,12 @@ def get_department(department_id: int, db: Session = Depends(get_db), current_us
     )
 
 @router.post("/", response_model=DepartmentResponse, status_code=status.HTTP_201_CREATED)
-def create_department(dept_in: DepartmentCreate, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
-    """Module 3: Create a new department"""
+def create_department(
+    dept_in: DepartmentCreate, 
+    db: Session = Depends(get_db), 
+    current_user = Depends(require_roles([UserRole.ADMIN, UserRole.HR]))
+):
+    """Module 3 & Module 26: Create a new department (Restricted to ADMIN, HR)"""
     existing = db.query(Department).filter(
         (Department.name == dept_in.name) | (Department.code == dept_in.code)
     ).first()
@@ -74,8 +79,13 @@ def create_department(dept_in: DepartmentCreate, db: Session = Depends(get_db), 
     )
 
 @router.put("/{department_id}", response_model=DepartmentResponse)
-def update_department(department_id: int, dept_in: DepartmentUpdate, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
-    """Module 3: Update department information"""
+def update_department(
+    department_id: int, 
+    dept_in: DepartmentUpdate, 
+    db: Session = Depends(get_db), 
+    current_user = Depends(require_roles([UserRole.ADMIN, UserRole.HR]))
+):
+    """Module 3 & Module 26: Update department information (Restricted to ADMIN, HR)"""
     dept = db.query(Department).filter(Department.id == department_id).first()
     if not dept:
         raise HTTPException(status_code=404, detail="Department not found")
@@ -103,8 +113,12 @@ def update_department(department_id: int, dept_in: DepartmentUpdate, db: Session
     )
 
 @router.delete("/{department_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_department(department_id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
-    """Module 3: Delete department"""
+def delete_department(
+    department_id: int, 
+    db: Session = Depends(get_db), 
+    current_user = Depends(require_roles([UserRole.ADMIN, UserRole.HR]))
+):
+    """Module 3 & Module 26: Delete department (Restricted to ADMIN, HR)"""
     dept = db.query(Department).filter(Department.id == department_id).first()
     if not dept:
         raise HTTPException(status_code=404, detail="Department not found")

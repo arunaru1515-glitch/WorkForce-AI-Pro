@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Optional, List, Dict, Any
+from app.schemas.base import ORMBaseModel
 
 class GoalItem(BaseModel):
     title: str
@@ -8,7 +9,7 @@ class GoalItem(BaseModel):
     status: str = "IN_PROGRESS"  # NOT_STARTED, IN_PROGRESS, ACHIEVED, DELAYED
     progress_percentage: int = 50
 
-class PerformanceReviewBase(BaseModel):
+class PerformanceReviewBase(ORMBaseModel):
     employee_id: int
     review_cycle: str = "Annual Review 2026"
     rating: float = Field(..., ge=1.0, le=5.0, description="Rating from 1.0 to 5.0")
@@ -38,9 +39,6 @@ class PerformanceReviewResponse(PerformanceReviewBase):
     department_name: Optional[str] = None
     job_title: Optional[str] = None
     reviewed_at: datetime
-
-    class Config:
-        from_attributes = True
 
 class PerformanceStatsResponse(BaseModel):
     total_reviews: int

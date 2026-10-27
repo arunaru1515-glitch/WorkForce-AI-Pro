@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from typing import List, Optional
+from datetime import datetime
 import random
 from app.database import get_db
 from app.models.employee import Employee
@@ -9,13 +10,21 @@ from app.models.department import Department
 from app.models.user import User, UserRole
 from app.core.security import get_password_hash
 from app.schemas.employee import EmployeeCreate, EmployeeUpdate, EmployeeResponse
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, require_roles
 
-router = APIRouter(prefix="/employees", tags=["Employee Management System"])
+router = APIRouter(prefix="/employees", tags=["2. Employees & Directory"])
 
-def format_employee_response(emp: Employee) -> EmployeeResponse:
+def format_employee_response(emp: Employee, requesting_user: Optional[User] = None) -> EmployeeResponse:
     dept_name = emp.department.name if emp.department else "Unassigned"
     emp_role = emp.user.role.value if (emp.user and hasattr(emp.user.role, 'value')) else (str(emp.user.role) if emp.user else "EMPLOYEE")
+    
+    # RBAC Confidentiality: Employees cannot see other employees' salaries
+    salary_val = emp.salary or 50000.0
+    if requesting_user and requesting_user.role == UserRole.EMPLOYEE:
+        is_self = (emp.user_id == requesting_user.id) or (emp.email == requesting_user.email)
+        if not is_self:
+            salary_val = 0.0
+
     return EmployeeResponse(
         id=emp.id,
         employee_code=emp.employee_code,
@@ -26,20 +35,20 @@ def format_employee_response(emp: Employee) -> EmployeeResponse:
         department_id=emp.department_id,
         department_name=dept_name,
         job_title=emp.job_title,
-        hire_date=emp.hire_date,
+        hire_date=emp.hire_date or datetime.utcnow(),
         employment_type=emp.employment_type,
-        salary=emp.salary,
+        salary=salary_val,
         status=emp.status,
         emergency_contact=emp.emergency_contact,
         address=emp.address,
         role=emp_role,
-        created_at=emp.created_at
+        created_at=emp.created_at or datetime.utcnow()
     )
 
 @router.get("/", response_model=List[EmployeeResponse])
 def get_employees(
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     search: Optional[str] = Query(None, description="Search by name, code, or email"),
     department_id: Optional[int] = Query(None, description="Filter by department"),
     status: Optional[str] = Query(None, description="Filter by employment status"),
@@ -70,19 +79,23 @@ def get_employees(
         query = query.filter(Employee.employment_type == employment_type)
         
     employees = query.order_by(Employee.id.desc()).all()
-    return [format_employee_response(e) for e in employees]
+    return [format_employee_response(e, current_user) for e in employees]
 
 @router.get("/{employee_id}", response_model=EmployeeResponse)
-def get_employee(employee_id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+def get_employee(employee_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """Module 2: Get specific employee profile"""
     emp = db.query(Employee).filter(Employee.id == employee_id).first()
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
-    return format_employee_response(emp)
+    return format_employee_response(emp, current_user)
 
 @router.post("/", response_model=EmployeeResponse, status_code=status.HTTP_201_CREATED)
-def create_employee(emp_in: EmployeeCreate, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
-    """Module 2: Create new employee"""
+def create_employee(
+    emp_in: EmployeeCreate, 
+    db: Session = Depends(get_db), 
+    current_user: User = Depends(require_roles([UserRole.ADMIN, UserRole.HR]))
+):
+    """Module 2 & Module 26: Create new employee (Restricted to ADMIN, HR)"""
     # Verify email uniqueness
     if db.query(Employee).filter(Employee.email == emp_in.email).first():
         raise HTTPException(status_code=400, detail="Employee with this email already exists")
@@ -139,51 +152,67 @@ def create_employee(emp_in: EmployeeCreate, db: Session = Depends(get_db), curre
     db.add(new_emp)
     db.commit()
     db.refresh(new_emp)
-    return format_employee_response(new_emp)
+    return format_employee_response(new_emp, current_user)
 
 @router.put("/{employee_id}", response_model=EmployeeResponse)
-def update_employee(employee_id: int, emp_in: EmployeeUpdate, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
-    """Module 2: Update employee profile"""
+def update_employee(employee_id: int, emp_in: EmployeeUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """Module 2 & Module 26: Update employee profile with role check"""
     emp = db.query(Employee).filter(Employee.id == employee_id).first()
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
         
+    # RBAC: Employees can only update their own profile and cannot change salary/role
+    if current_user.role == UserRole.EMPLOYEE:
+        is_self = (emp.user_id == current_user.id) or (emp.email == current_user.email)
+        if not is_self:
+            raise HTTPException(status_code=403, detail="Access denied. Employees can only update their own personal profile.")
+        # Strip privileged fields for employee self-service
+        emp_in.salary = None
+        emp_in.role = None
+        emp_in.status = None
+        emp_in.department_id = None
+
     for field, val in emp_in.model_dump(exclude_unset=True).items():
-        if field not in ["role", "password"]:
+        if field not in ["role", "password"] and val is not None:
             setattr(emp, field, val)
 
-    # Sync role or password if updated
-    if not emp.user:
-        existing_user = db.query(User).filter(User.email == emp.email).first()
-        if existing_user:
-            emp.user = existing_user
-            emp.user_id = existing_user.id
-        elif emp_in.password or emp_in.role:
-            user_account = User(
-                email=emp.email,
-                full_name=f"{emp.first_name} {emp.last_name}",
-                hashed_password=get_password_hash(emp_in.password or "Employee@123"),
-                role=getattr(UserRole, (emp_in.role or "EMPLOYEE").upper(), UserRole.EMPLOYEE),
-                is_active=True
-            )
-            db.add(user_account)
-            db.flush()
-            emp.user = user_account
-            emp.user_id = user_account.id
+    # Sync role or password if updated by HR/Admin
+    if current_user.role in [UserRole.ADMIN, UserRole.HR]:
+        if not emp.user:
+            existing_user = db.query(User).filter(User.email == emp.email).first()
+            if existing_user:
+                emp.user = existing_user
+                emp.user_id = existing_user.id
+            elif emp_in.password or emp_in.role:
+                user_account = User(
+                    email=emp.email,
+                    full_name=f"{emp.first_name} {emp.last_name}",
+                    hashed_password=get_password_hash(emp_in.password or "Employee@123"),
+                    role=getattr(UserRole, (emp_in.role or "EMPLOYEE").upper(), UserRole.EMPLOYEE),
+                    is_active=True
+                )
+                db.add(user_account)
+                db.flush()
+                emp.user = user_account
+                emp.user_id = user_account.id
 
-    if emp.user:
-        if emp_in.role:
-            emp.user.role = getattr(UserRole, emp_in.role.upper(), emp.user.role)
-        if emp_in.password:
-            emp.user.hashed_password = get_password_hash(emp_in.password)
+        if emp.user:
+            if emp_in.role:
+                emp.user.role = getattr(UserRole, emp_in.role.upper(), emp.user.role)
+            if emp_in.password:
+                emp.user.hashed_password = get_password_hash(emp_in.password)
         
     db.commit()
     db.refresh(emp)
-    return format_employee_response(emp)
+    return format_employee_response(emp, current_user)
 
 @router.delete("/{employee_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_employee(employee_id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
-    """Module 2: Delete employee"""
+def delete_employee(
+    employee_id: int, 
+    db: Session = Depends(get_db), 
+    current_user: User = Depends(require_roles([UserRole.ADMIN, UserRole.HR]))
+):
+    """Module 2 & Module 26: Delete employee (Restricted to ADMIN, HR)"""
     emp = db.query(Employee).filter(Employee.id == employee_id).first()
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")

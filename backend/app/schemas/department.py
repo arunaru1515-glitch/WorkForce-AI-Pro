@@ -1,8 +1,9 @@
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
+from app.schemas.base import ORMBaseModel
 
-class DepartmentBase(BaseModel):
+class DepartmentBase(ORMBaseModel):
     name: str
     code: str
     description: Optional[str] = None
@@ -21,6 +22,3 @@ class DepartmentResponse(DepartmentBase):
     id: int
     employee_count: Optional[int] = 0
     created_at: datetime
-
-    class Config:
-        from_attributes = True

@@ -11,7 +11,7 @@ from app.schemas.task import TaskCreate, TaskUpdate, TaskStatusUpdate, TaskRespo
 from app.core.deps import get_current_user, require_roles
 from app.core.audit import log_audit_event
 
-router = APIRouter(prefix="/tasks", tags=["Workflow & Task Management (Module 21)"])
+router = APIRouter(prefix="/tasks", tags=["6. Tasks & Performance"])
 
 def format_task_response(task: Task) -> TaskResponse:
     today = date.today()

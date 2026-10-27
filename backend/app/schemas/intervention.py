@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional, List, Dict, Any
+from app.schemas.base import ORMBaseModel
 
 class InterventionCreate(BaseModel):
     employee_id: int
@@ -14,7 +15,7 @@ class InterventionUpdate(BaseModel):
     status: str
     outcome_notes: Optional[str] = None
 
-class InterventionResponse(BaseModel):
+class InterventionResponse(ORMBaseModel):
     id: int
     employee_id: int
     employee_name: str
@@ -30,6 +31,3 @@ class InterventionResponse(BaseModel):
     outcome_notes: Optional[str]
     created_at: datetime
     updated_at: datetime
-
-    class Config:
-        from_attributes = True

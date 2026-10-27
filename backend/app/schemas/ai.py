@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional, List, Dict, Any
+from app.schemas.base import ORMBaseModel
 
 class PredictRequest(BaseModel):
     employee_id: Optional[int] = None
@@ -38,7 +39,7 @@ class PredictionResponse(BaseModel):
     recommendations: List[Recommendation]
     assessed_at: str
 
-class RiskAssessmentResponse(BaseModel):
+class RiskAssessmentResponse(ORMBaseModel):
     id: int
     employee_id: int
     employee_name: str
@@ -51,9 +52,6 @@ class RiskAssessmentResponse(BaseModel):
     contributing_factors: Optional[str]
     trigger_event: str
     assessed_at: datetime
-
-    class Config:
-        from_attributes = True
 
 class ModelInfoResponse(BaseModel):
     model_type: str

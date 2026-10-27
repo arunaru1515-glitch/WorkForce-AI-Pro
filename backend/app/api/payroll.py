@@ -5,10 +5,11 @@ from typing import List, Optional
 from app.database import get_db
 from app.models.payroll import Payroll
 from app.models.employee import Employee
+from app.models.user import UserRole
 from app.schemas.payroll import PayrollGenerate, PayrollResponse
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, require_roles
 
-router = APIRouter(prefix="/payroll", tags=["Payroll Management System"])
+router = APIRouter(prefix="/payroll", tags=["4. Payroll & Compensation"])
 
 def format_payroll_response(p: Payroll) -> PayrollResponse:
     emp = p.employee
@@ -46,21 +47,35 @@ def get_payrolls(
     year: Optional[int] = Query(None),
     employee_id: Optional[int] = Query(None)
 ):
-    """Module 6: Get payroll list with period filters"""
+    """Module 6 & Module 26: Get payroll list with strict RBAC scoping"""
     query = db.query(Payroll)
+    
+    # RBAC: Regular EMPLOYEE can ONLY view their own payslips
+    if current_user.role == UserRole.EMPLOYEE:
+        emp = db.query(Employee).filter(
+            (Employee.user_id == current_user.id) | (Employee.email == current_user.email)
+        ).first()
+        if not emp:
+            return []
+        query = query.filter(Payroll.employee_id == emp.id)
+    elif employee_id:
+        query = query.filter(Payroll.employee_id == employee_id)
+
     if month:
         query = query.filter(Payroll.month == month)
     if year:
         query = query.filter(Payroll.year == year)
-    if employee_id:
-        query = query.filter(Payroll.employee_id == employee_id)
         
     records = query.order_by(Payroll.year.desc(), Payroll.month.desc(), Payroll.id.desc()).all()
     return [format_payroll_response(r) for r in records]
 
 @router.post("/generate", response_model=PayrollResponse, status_code=status.HTTP_201_CREATED)
-def generate_payroll(pay_in: PayrollGenerate, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
-    """Module 6: Generate monthly salary breakdown for an employee"""
+def generate_payroll(
+    pay_in: PayrollGenerate, 
+    db: Session = Depends(get_db), 
+    current_user = Depends(require_roles([UserRole.ADMIN, UserRole.HR]))
+):
+    """Module 6 & Module 26: Generate monthly salary breakdown for an employee (Restricted to ADMIN, HR)"""
     emp = db.query(Employee).filter(Employee.id == pay_in.employee_id).first()
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
@@ -107,8 +122,12 @@ def generate_payroll(pay_in: PayrollGenerate, db: Session = Depends(get_db), cur
     return format_payroll_response(payroll)
 
 @router.post("/{payroll_id}/pay", response_model=PayrollResponse)
-def mark_payroll_paid(payroll_id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
-    """Module 6: Mark payroll as Paid & record payment timestamp"""
+def mark_payroll_paid(
+    payroll_id: int, 
+    db: Session = Depends(get_db), 
+    current_user = Depends(require_roles([UserRole.ADMIN, UserRole.HR]))
+):
+    """Module 6 & Module 26: Mark payroll as Paid & record payment timestamp (Restricted to ADMIN, HR)"""
     p = db.query(Payroll).filter(Payroll.id == payroll_id).first()
     if not p:
         raise HTTPException(status_code=404, detail="Payroll record not found")
@@ -119,10 +138,22 @@ def mark_payroll_paid(payroll_id: int, db: Session = Depends(get_db), current_us
     db.refresh(p)
     return format_payroll_response(p)
 
-@router.get("/payslip/{payroll_id}")
+@router.get("/payslip/{payroll_id}", response_model=PayrollResponse)
 def get_payslip_detail(payroll_id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
-    """Module 6: Payslip Generation for print / view"""
+    """Module 6 & Module 26: Payslip Generation for print / view with RBAC ownership check"""
     p = db.query(Payroll).filter(Payroll.id == payroll_id).first()
     if not p:
         raise HTTPException(status_code=404, detail="Payroll record not found")
+        
+    # RBAC: Employee can only view their own payslip
+    if current_user.role == UserRole.EMPLOYEE:
+        emp = db.query(Employee).filter(
+            (Employee.user_id == current_user.id) | (Employee.email == current_user.email)
+        ).first()
+        if not emp or p.employee_id != emp.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied. Employees can only view their own payslips."
+            )
+            
     return format_payroll_response(p)

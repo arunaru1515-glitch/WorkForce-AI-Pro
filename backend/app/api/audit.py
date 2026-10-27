@@ -10,7 +10,7 @@ from app.schemas.audit import AuditLogResponse, AuditStatsResponse
 from app.core.deps import get_current_user, require_roles
 from app.core.audit import log_audit_event
 
-router = APIRouter(prefix="/audit", tags=["Audit Logs & Activity Tracking (Module 20)"])
+router = APIRouter(prefix="/audit", tags=["8. Reports & Analytics"])
 
 @router.get("/logs", response_model=List[AuditLogResponse])
 def get_audit_logs(
